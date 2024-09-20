@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="stylealuno.css">
+    <title>Sistema de Biblioteca</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sistema de Biblioteca</h1>
+        <a href="indexbiblioteca.html">Voltar</a>
+    </header>
+
+    <!-- Botões para selecionar a tabela -->
+    <div>
+        <button onclick="mostrarTabela('alunos')">Alunos</button>
+        <button onclick="mostrarTabela('autores')">Autores</button>
+        <button onclick="mostrarTabela('livros')">Livros</button>
+        <button onclick="mostrarTabela('emprestimos')">Empréstimos</button>
+    </div>
+
+    <!-- Formulário para selecionar e enviar o arquivo CSV -->
+    <form id="formCSV">
+        <input type="file" id="arquivoCSV" accept=".csv">
+        <select id="selecaoTipo">
+            <option value="alunos">Alunos</option>
+            <option value="autores">Autores</option>
+            <option value="livros">Livros</option>
+            <option value="emprestimos">Empréstimos</option>
+        </select>
+        <button type="submit">Enviar</button>
+    </form>
+
+    <!-- Tabelas para exibir os dados -->
+    <div id="conteudoTabelas">
+        <!-- Tabela de Alunos -->
+        <div id="tabelaAlunos" class="hidden">
+            <h2>Tabela de Alunos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Curso</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyAlunos"></tbody>
+            </table>
+        </div>
+
+        <!-- Tabela de Autores -->
+        <div id="tabelaAutores" class="hidden">
+            <h2>Tabela de Autores</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Nascimento</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyAutores"></tbody>
+            </table>
+        </div>
+
+        <!-- Tabela de Livros -->
+        <div id="tabelaLivros" class="hidden">
+            <h2>Tabela de Livros</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Autor</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyLivros"></tbody>
+            </table>
+        </div>
+
+        <!-- Tabela de Empréstimos -->
+        <div id="tabelaEmprestimos" class="hidden">
+            <h2>Tabela de Empréstimos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Aluno</th>
+                        <th>Livro</th>
+                        <th>Data de Empréstimo</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyEmprestimos"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let alunos = {};
+        let autores = {};
+        let livros = {};
+        let emprestimos = [];
+
+        class Aluno {
+            constructor(id, nome, curso) {
+                this.id = id;
+                this.nome = nome;
+                this.curso = curso;
+            }
+        }
+
+        class Autor {
+            constructor(id, nome, nacionalidade) {
+                this.id = id;
+                this.nome = nome;
+                this.nacionalidade = nacionalidade;
+            }
+        }
+
+        class Livro {
+            constructor(id, titulo, autor) {
+                this.id = id;
+                this.titulo = titulo;
+                this.autor = autor;
+            }
+        }
+
+        class Emprestimo {
+            constructor(id, aluno, livro, dataEmprestimo) {
+                this.id = id;
+                this.aluno = aluno;
+                this.livro = livro;
+                this.dataEmprestimo = dataEmprestimo;
+            }
+        }
+
+        // Função para exibir a tabela correspondente ao botão clicado
+        function mostrarTabela(tabela) {
+            // Ocultar todas as tabelas
+            document.getElementById('tabelaAlunos').classList.add('hidden');
+            document.getElementById('tabelaAutores').classList.add('hidden');
+            document.getElementById('tabelaLivros').classList.add('hidden');
+            document.getElementById('tabelaEmprestimos').classList.add('hidden');
+
+            // Mostrar a tabela selecionada
+            document.getElementById('tabela' + capitalizeFirstLetter(tabela)).classList.remove('hidden');
+            
+            // Carregar dados na tabela ao clicar
+            if (tabela === 'alunos') {
+                mostrarAlunos();
+            } else if (tabela === 'autores') {
+                mostrarAutores();
+            } else if (tabela === 'livros') {
+                mostrarLivros();
+            } else if (tabela === 'emprestimos') {
+                mostrarEmprestimos();
+            }
+        }
+
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        // Funções para mostrar os dados nas tabelas
+        function mostrarAlunos() {
+            let tbody = document.getElementById('tbodyAlunos');
+            tbody.innerHTML = '';
+            Object.values(alunos).forEach(aluno => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${aluno.id}</td><td>${aluno.nome}</td><td>${aluno.curso}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function mostrarAutores() {
+            let tbody = document.getElementById('tbodyAutores');
+            tbody.innerHTML = '';
+            Object.values(autores).forEach(autor => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${autor.id}</td><td>${autor.nome}</td><td>${autor.nacionalidade}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function mostrarLivros() {
+            let tbody = document.getElementById('tbodyLivros');
+            tbody.innerHTML = '';
+            Object.values(livros).forEach(livro => {
+                const tr = document.createElement('tr');
+                const nomeAutor = livro.autor ? livro.autor.nome : 'Autor desconhecido';
+                tr.innerHTML = `<td>${livro.id}</td><td>${livro.titulo}</td><td>${nomeAutor}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function mostrarEmprestimos() {
+            let tbody = document.getElementById('tbodyEmprestimos');
+            tbody.innerHTML = '';
+            emprestimos.forEach(emprestimo => {
+                const nomeAluno = emprestimo.aluno ? emprestimo.aluno.nome : 'Aluno desconhecido';
+                const tituloLivro = emprestimo.livro ? emprestimo.livro.titulo : 'Livro desconhecido';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${emprestimo.id}</td><td>${nomeAluno}</td><td>${tituloLivro}</td><td>${emprestimo.dataEmprestimo}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Função para ler o arquivo CSV
+        function lerArquivoCSV(arquivo, callback) {
+            const leitor = new FileReader();
+            leitor.onload = function (evento) {
+                const conteudo = evento.target.result;
+                callback(conteudo);
+            };
+            leitor.readAsText(arquivo);
+        }
+
+        // Função para converter o CSV em um array
+        function converterCSVparaArray(conteudoCSV) {
+            const linhas = conteudoCSV.split('\n');
+            return linhas.map(linha => linha.split(';'));
+        }
+
+        // Função para carregar dados
+        function carregarDados(tipo, conteudoCSV) {
+            const arrayCSV = converterCSVparaArray(conteudoCSV);
+
+            if (tipo === 'alunos') {
+                arrayCSV.forEach(linha => {
+                    const [idAluno, nomeAluno, cursoAluno] = linha;
+                    alunos[idAluno] = { id: idAluno, nome: nomeAluno, curso: cursoAluno };
+                });
+            } else if (tipo === 'autores') {
+                arrayCSV.forEach(linha => {
+                    const [idAutor, nomeAutor, nacionalidade] = linha;
+                    autores[idAutor] = { id: idAutor, nome: nomeAutor, nacionalidade: nacionalidade };
+                });
+            } else if (tipo === 'livros') {
+                arrayCSV.forEach(linha => {
+                    const [idLivro, tituloLivro, idAutor] = linha;
+                    const autor = autores[idAutor];
+                    livros[idLivro] = { id: idLivro, titulo: tituloLivro, autor: autor };
+                });
+            } else if (tipo === 'emprestimos') {
+                arrayCSV.forEach(linha => {
+                    const [idEmprestimo, idAluno, idLivro, dataEmprestimo] = linha;
+                    const aluno = alunos[idAluno];
+                    const livro = livros[idLivro];
+                    emprestimos.push({ id: idEmprestimo, aluno: aluno, livro: livro, dataEmprestimo: dataEmprestimo });
+                });
+            }
+        }
+
+        // Manipulação do formulário de upload
+        const formCSV = document.getElementById('formCSV');
+        formCSV.addEventListener('submit', function (evento) {
+            evento.preventDefault();
+            const inputArquivo = document.getElementById('arquivoCSV');
+            const arquivo = inputArquivo.files[0];
+            const tipo = document.getElementById('selecaoTipo').value;
+
+            if (arquivo && tipo) {
+                lerArquivoCSV(arquivo, function (conteudo) {
+                    carregarDados(tipo, conteudo);
+                });
+            } else {
+                console.error("Nenhum arquivo selecionado ou tipo de dado não escolhido.");
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
